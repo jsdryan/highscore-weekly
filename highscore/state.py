@@ -18,8 +18,8 @@ def _key(t: Title) -> str:
 def mark_new(titles: list[Title], state: dict, today: str) -> dict:
     for t in titles:
         k = _key(t)
-        if k not in state:
-            t.is_new = True
+        t.is_new = k not in state
+        if t.is_new:
             state[k] = {"first_listed": today}
     return state
 
