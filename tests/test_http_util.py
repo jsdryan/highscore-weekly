@@ -51,3 +51,19 @@ def test_raises_after_retries_exhausted():
     with pytest.raises(FetchError):
         get_json("http://x", {}, session=sess)
     assert sess.calls == 3
+
+
+def test_error_message_redacts_api_keys():
+    import requests
+
+    class LeakySession:
+        def get(self, url, params=None, timeout=None):
+            raise requests.ConnectionError(
+                "Max retries exceeded with url: /?apikey=SECRET123&i=tt001 "
+                "(also api_key=TOPSECRET elsewhere)")
+
+    with pytest.raises(FetchError) as ei:
+        get_json("http://x", {}, session=LeakySession())
+    msg = str(ei.value)
+    assert "SECRET123" not in msg and "TOPSECRET" not in msg
+    assert "apikey=***" in msg

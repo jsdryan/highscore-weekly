@@ -1,6 +1,8 @@
 import datetime
 import json
 
+import pytest
+
 from highscore.http_util import FetchError
 from highscore.main import run
 from highscore.models import Title
@@ -76,3 +78,19 @@ def test_second_run_not_new(tmp_path, monkeypatch):
     assert "🆕" not in index
     # 歷期連結含上一期
     assert "reports/2026-07-17.html" in index
+
+
+def test_mass_failures_abort_without_writing_report(tmp_path, monkeypatch):
+    """額度耗盡等大範圍故障時要中止，不能用近空報告覆蓋上一期好報告。"""
+    monkeypatch.setenv("TMDB_API_KEY", "x")
+    monkeypatch.setenv("OMDB_API_KEY", "y")
+
+    def always_fail(imdb_id, api_key=""):
+        raise FetchError("HTTP 401")
+
+    client = FakeTmdb([make_title(1), make_title(2), make_title(3)], [])
+    with pytest.raises(SystemExit):
+        run(today=datetime.date(2026, 7, 17), root=tmp_path,
+            tmdb_client=client, fetch_ratings_fn=always_fail)
+    assert not (tmp_path / "index.html").exists()
+    assert not (tmp_path / "state.json").exists()

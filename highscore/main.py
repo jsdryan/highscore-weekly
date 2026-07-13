@@ -37,6 +37,12 @@ def run(today=None, root=Path("."), tmdb_client=None, fetch_ratings_fn=None):
         except FetchError as exc:
             failures.append(f"{t.name}（{t.media_type}:{t.tmdb_id}）：{exc}")
 
+    # 失敗過半代表額度耗盡或大範圍故障：中止並保留上一期報告，讓 CI 標紅通知
+    if candidates and len(failures) > len(candidates) // 2:
+        raise SystemExit(
+            f"查詢失敗 {len(failures)}/{len(candidates)} 筆過半，"
+            "疑似 API 額度耗盡或大範圍故障；中止且不覆寫報告")
+
     st_path = root / "state.json"
     st = state_mod.load_state(st_path)
     state_mod.mark_new(qualified, st, date_to)

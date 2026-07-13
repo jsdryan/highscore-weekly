@@ -4,6 +4,7 @@ from .models import Title
 
 BASE = "https://api.themoviedb.org/3"
 IMG = "https://image.tmdb.org/t/p/w342"
+MAX_PAGES = 500  # TMDB page 參數上限；total_pages 可能超過它
 
 
 class TmdbClient:
@@ -33,7 +34,7 @@ class TmdbClient:
         while True:
             data = self._get(path, page=page, **params)
             yield from data.get("results", [])
-            if page >= data.get("total_pages", 1):
+            if page >= min(data.get("total_pages", 1), MAX_PAGES):
                 return
             page += 1
 

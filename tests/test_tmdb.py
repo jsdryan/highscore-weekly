@@ -90,6 +90,20 @@ def test_tv_mid_season_show_skipped():
     assert client.discover_tv("2026-05-10", "2026-07-09") == []
 
 
+def test_paged_respects_page_cap(monkeypatch):
+    """TMDB page 參數上限 500，total_pages 可能更大；超過上限要停，不能打出 4xx。"""
+    from highscore import tmdb as tmdb_mod
+    monkeypatch.setattr(tmdb_mod, "MAX_PAGES", 2)
+    routes = dict(GENRES_MOVIE)
+    routes[("/discover/movie", 1)] = {
+        "page": 1, "total_pages": 999, "results": [movie_result(1)]}
+    routes[("/discover/movie", 2)] = {
+        "page": 2, "total_pages": 999, "results": [movie_result(2)]}
+    # 第 3 頁不存在於 routes：若未在上限停下，FakeApi 會 KeyError
+    client = TmdbClient("k", get_json_fn=FakeApi(routes))
+    assert [t.tmdb_id for t in client.discover_movies("a", "b")] == [1, 2]
+
+
 def test_imdb_id():
     routes = {("/movie/1/external_ids",): {"imdb_id": "tt0001"},
               ("/tv/2/external_ids",): {"imdb_id": None}}
