@@ -85,7 +85,7 @@ def render(movies, shows, run_date, failures, archives=None) -> str:
         f"<style>{_CSS}</style></head><body>",
         f"<h1>高分片週報 <small>{_esc(run_date)}</small></h1>",
         '<div class="meta">門檻：🍅 爛番茄 ≥ 85% 且 ⭐ IMDb ≥ 7.5（≥ 500 票）；'
-        "影集缺 RT 資料時以 IMDb 為準。🆕 = 本週新入選。</div>",
+        "影集缺 RT 資料時以 IMDb 為準。新入選作品標有 new 圖示。</div>",
         _section("電影", movies),
         _section("影集", shows),
     ]
