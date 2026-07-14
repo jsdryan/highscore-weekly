@@ -3,6 +3,7 @@ name: weekly-report
 on:
   schedule:
     - cron: "0 1 * * 5"   # 週五 01:00 UTC = 台北週五 09:00
+    - cron: "7 2 15 7 *"  # 一次性補跑：2026-07-15 OMDb 額度恢復後重出正體版報告（可刪）
   workflow_dispatch:
 
 permissions:
