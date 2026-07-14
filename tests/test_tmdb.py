@@ -90,6 +90,38 @@ def test_tv_mid_season_show_skipped():
     assert client.discover_tv("2026-05-10", "2026-07-09") == []
 
 
+def test_movie_fields_converted_to_taiwan_traditional():
+    """TMDB 的 zh-TW 資料摻雜簡體（類型清單整份是簡體），入庫前要轉正體。"""
+    routes = {("/genre/movie/list",): {"genres": [{"id": 28, "name": "动作"},
+                                                  {"id": 53, "name": "惊悚"}]}}
+    routes[("/discover/movie", 1)] = {"page": 1, "total_pages": 1, "results": [{
+        "id": 1, "title": "网络疑云", "original_title": "Searching",
+        "overview": "女儿在街头被拐走，店主探寻犯罪网络。", "poster_path": "/p.jpg",
+        "release_date": "2026-06-01", "genre_ids": [28, 53]}]}
+    client = TmdbClient("k", get_json_fn=FakeApi(routes))
+    t = client.discover_movies("a", "b")[0]
+    assert t.genres == ["動作", "驚悚"]
+    assert t.name == "網路疑雲"
+    assert t.overview == "女兒在街頭被拐走，店主探尋犯罪網路。"
+    assert t.original_name == "Searching"
+
+
+def test_tv_fields_converted_to_taiwan_traditional():
+    routes = {("/genre/tv/list",): {"genres": [{"id": 18, "name": "剧情"}]}}
+    routes[("/discover/tv", 1)] = {"page": 1, "total_pages": 1,
+                                   "results": [{"id": 10}]}
+    routes[("/tv/10",)] = {"name": "熊家餐厅", "original_name": "The Bear",
+                           "overview": "关于餐厅的故事。", "poster_path": "/t.jpg",
+                           "first_air_date": "2026-06-15",
+                           "genres": [{"id": 18, "name": "剧情"}],
+                           "seasons": [{"season_number": 1, "air_date": "2026-06-15"}]}
+    client = TmdbClient("k", get_json_fn=FakeApi(routes))
+    t = client.discover_tv("2026-05-10", "2026-07-09")[0]
+    assert t.genres == ["劇情"]
+    assert t.name == "熊家餐廳"
+    assert t.overview == "關於餐廳的故事。"
+
+
 def test_paged_respects_page_cap(monkeypatch):
     """TMDB page 參數上限 500，total_pages 可能更大；超過上限要停，不能打出 4xx。"""
     from highscore import tmdb as tmdb_mod

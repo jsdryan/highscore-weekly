@@ -1,6 +1,7 @@
 """TMDB API：撈候選片單（繁中詮釋資料）與 IMDb ID。"""
 from .http_util import get_json
 from .models import Title
+from .zh import to_tw
 
 BASE = "https://api.themoviedb.org/3"
 IMG = "https://image.tmdb.org/t/p/w342"
@@ -22,7 +23,7 @@ class TmdbClient:
         if media_type not in self._genre_cache:
             data = self._get(f"/genre/{media_type}/list")
             self._genre_cache[media_type] = {
-                g["id"]: g["name"] for g in data.get("genres", [])}
+                g["id"]: to_tw(g["name"]) for g in data.get("genres", [])}
         return self._genre_cache[media_type]
 
     def imdb_id(self, media_type, tmdb_id):
@@ -50,9 +51,9 @@ class TmdbClient:
             titles.append(Title(
                 media_type="movie",
                 tmdb_id=r["id"],
-                name=r.get("title") or r.get("original_title", ""),
+                name=to_tw(r.get("title") or r.get("original_title", "")),
                 original_name=r.get("original_title", ""),
-                overview=r.get("overview", ""),
+                overview=to_tw(r.get("overview", "")),
                 poster_url=IMG + r["poster_path"] if r.get("poster_path") else None,
                 date=r.get("release_date", ""),
                 genres=[genres[g] for g in r.get("genre_ids", []) if g in genres],
@@ -95,13 +96,13 @@ class TmdbClient:
                         season_number, season_date = s["season_number"], air
         if season_number is None:
             return None
-        genre_names = [g["name"] for g in d.get("genres", [])]
+        genre_names = [to_tw(g["name"]) for g in d.get("genres", [])]
         return Title(
             media_type="tv",
             tmdb_id=tmdb_id,
-            name=d.get("name") or d.get("original_name", ""),
+            name=to_tw(d.get("name") or d.get("original_name", "")),
             original_name=d.get("original_name", ""),
-            overview=d.get("overview", ""),
+            overview=to_tw(d.get("overview", "")),
             poster_url=IMG + d["poster_path"] if d.get("poster_path") else None,
             date=season_date,
             genres=genre_names,
